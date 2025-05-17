@@ -1,45 +1,35 @@
-import json
+
+# mood_tools.py
+
+import matplotlib
+matplotlib.use("TkAgg")  # For headless or CLI use
 import matplotlib.pyplot as plt
-from datetime import datetime
+import json
+import datetime
 
-# Assign numeric scores to moods
-mood_scale = {
-    "happy": 5,
-    "content": 4,
-    "neutral": 3,
-    "anxious": 2,
-    "stressed": 1,
-    "sad": 0
-}
-
-def plot_mood_trend(filename="journal_storage.json"):
-    with open(filename, "r") as f:
-        data = json.load(f)
-
-    dates = []
+def generate_mood_plot(journal_path="journal.json", output_path="mood_plot.png"):
     moods = []
+    timestamps = []
 
-    for log in data:
-        tone = log.get("tone", "neutral").lower()
-        score = mood_scale.get(tone, 3)
-        timestamp = datetime.fromisoformat(log["timestamp"])
-        dates.append(timestamp)
-        moods.append(score)
+    with open(journal_path, "r") as f:
+        for line in f:
+            entry = json.loads(line)
+            timestamps.append(datetime.datetime.fromisoformat(entry["timestamp"]))
+            moods.append(entry["mood"].capitalize())
 
-    if not dates:
-        print("No data to plot.")
-        return
+    # Convert moods to numeric values (simple encoding)
+    mood_map = {m: i for i, m in enumerate(sorted(set(moods)))}
+    mood_values = [mood_map[m] for m in moods]
 
     plt.figure(figsize=(10, 5))
-    plt.plot(dates, moods, marker='o', linestyle='-', color='purple')
-    plt.yticks(list(mood_scale.values()), list(mood_scale.keys()))
-    plt.title("🧠 Mood Trend Over Time")
+    plt.plot(timestamps, mood_values, marker='o')
+    plt.xticks(rotation=45)
+    plt.yticks(list(mood_map.values()), list(mood_map.keys()))
+    plt.title("Mood Over Time")
     plt.xlabel("Date")
-    plt.ylabel("Mood Level")
-    plt.grid(True)
+    plt.ylabel("Mood")
     plt.tight_layout()
-    plt.show()
+    plt.savefig(output_path)
+    return output_path
 
-if __name__ == "__main__":
-    plot_mood_trend()
 
